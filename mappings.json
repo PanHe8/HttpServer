@@ -1,0 +1,24 @@
+[
+  {
+    "id": "a1b2c3d4",
+    "name": "emark-start",
+    "method": "POST",
+    "url_path": "/api/api/emark/start",
+    "request_body": "{\"transCode\": \"3d129d02-498c-45b4-ac0b-f878a3a64093\", \"resCode\": \"C-CSUN005-1\", \"code\": \"A2311300000\"}",
+    "response_body": "{\n  \"code\": 10000,\n  \"message\": \"\",\n  \"data\": {\n    \"template\": \"M001\",\n    \"values\": [\n      {\"value\": \"A23113000000001\", \"confirm_flag\": \"N\"},\n      {\"value\": \"A23113000000002\", \"confirm_flag\": \"N\"},\n      {\"value\": \"A23113000000003\", \"confirm_flag\": \"N\"},\n      {\"value\": \"A23113000000004\", \"confirm_flag\": \"N\"}\n    ]\n  }\n}",
+    "response_status": 200,
+    "response_content_type": "application/json",
+    "enabled": true
+  },
+  {
+    "id": "e5f6g7h8",
+    "name": "health-check",
+    "method": "GET",
+    "url_path": "/health",
+    "request_body": "",
+    "response_body": "{\"status\": \"ok\"}",
+    "response_status": 200,
+    "response_content_type": "application/json",
+    "enabled": true
+  }
+]
