@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 _mappings: List[Mapping] = []
 _auto_reply: bool = False
 _pending_queue: queue.Queue[PendingRequest] = queue.Queue()
-_server_instance: Optional["MockServer"] = None
+_pending_lock = threading.Lock()
+_active_pending: List[PendingRequest] = []
 
 
 def get_mappings() -> List[Mapping]:
@@ -134,9 +135,21 @@ class _MockHandler(BaseHTTPRequestHandler):
 
         pending = PendingRequest(request_info)
         _pending_queue.put(pending)
+        with _pending_lock:
+            _active_pending.append(pending)
         logger.info("pending  %s %s  →  waiting for manual response", method, path)
 
-        resp_body, resp_status, resp_ct = pending.wait_for_response(timeout=120.0)
+        try:
+            while True:
+                result = pending.wait_for_response(timeout=1.0)
+                if result is not None:
+                    resp_body, resp_status, resp_ct = result
+                    break
+        finally:
+            with _pending_lock:
+                if pending in _active_pending:
+                    _active_pending.remove(pending)
+
         self._send_response(resp_status, resp_body, resp_ct)
 
     def _send_response(self, status: int, body: str, content_type: str) -> None:
@@ -181,6 +194,20 @@ class MockServer:
     def stop(self) -> None:
         if self._httpd is None:
             return
+
+        # Cancel all pending requests so handlers return immediately
+        with _pending_lock:
+            for p in list(_active_pending):
+                p.cancel()
+            _active_pending.clear()
+
+        while not _pending_queue.empty():
+            try:
+                p = _pending_queue.get_nowait()
+                p.cancel()
+            except queue.Empty:
+                break
+
         self._httpd.shutdown()
         if self._thread is not None:
             self._thread.join(timeout=3)

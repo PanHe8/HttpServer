@@ -75,15 +75,18 @@ class PendingRequest:
         self._response_content_type: str = "application/json"
         self._event = threading.Event()
 
-    def wait_for_response(self, timeout: float = 60.0) -> tuple[str, int, str]:
-        """Block until the GUI sets a response. Returns (body, status, content_type)."""
+    def wait_for_response(self, timeout: float = 1.0) -> Optional[tuple[str, int, str]]:
+        """Poll with short timeout. Returns (body, status, content_type) or None if no response yet."""
         if not self._event.wait(timeout):
-            return (
-                json.dumps({"error": "request timeout - no manual response"}),
-                500,
-                "application/json",
-            )
+            return None
         return self._response_body, self._response_status, self._response_content_type
+
+    def cancel(self) -> None:
+        """Cancel the pending request so the handler returns immediately."""
+        self._response_body = json.dumps({"error": "server stopped"})
+        self._response_status = 503
+        self._response_content_type = "application/json"
+        self._event.set()
 
     def set_response(self, body: str, status: int = 200, content_type: str = "application/json") -> None:
         self._response_body = body

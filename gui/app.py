@@ -318,6 +318,10 @@ class MockServerGUI:
     def _toggle_server(self) -> None:
         if self._server.is_running:
             self._server.stop()
+            self._current_pending = None
+            self._request_text.configure(state="normal")
+            self._request_text.delete("1.0", "end")
+            self._request_text.configure(state="disabled")
             self._var_status.set("Stopped")
             self._status_lbl.configure(foreground="red")
             self._btn_start_stop.configure(text="Start")
